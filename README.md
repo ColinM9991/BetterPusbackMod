@@ -11,26 +11,24 @@ around the world.
 
 ### About this Fork and Copyright
 
-Better Pushback is developed by "Saso Kiselkov". So if you see this project or else, just contact me.
-I just did it, to "keep it a life on X-Plane 12". I will always respect that this is your code,
-and you are the father of this application. Hope you accept this as there was no answer from your side.
+This is a fork of of OButler's BetterPushback fork.
 
-There is no idea to steal it from you. If you don't like this effort. Just say and I will stop it, no question.
+To put it bluntly, this fork exists because I am fed up with non-developers vibe-coding functionality and believe the X-Plane ecosystem is going through a shift from well-designed plugins to vibe-coded systems. This isn't to gatekeep who can/can't use AI, or who can/can't contribute to plugins. Rather, it makes clear that using AI doesn't automatically make somebody a developer and the output still needs to be
+1. Well designed
+2. Peer reviewed by a human
+3. The code assessed and following best practice
 
-Thanks
+The purpose of this is to freeze the functionality in place, remove the recent AI contributions and allow for a version of BpB which sticks to the core principals of having a small, simple to use pushback system.
+
+It's fine if anybody wishes to create pull requests against this particular version to fix issues. It's also fine if you wish to use AI to assist in the development of those features/bugfixes but you absolutely **must** have enough development experience to be able to independently review the code. Using an LLM to validate the output is not an acceptable means of validation - it needs to be human validation.
+
+Any changes that cannot be explained in the authors own words (I.E; an explanation that is **not** produced by an LLM) will be rejected. Questions may range from
+1. Explain this feature
+2. Why did you opt for this block of code, over another approach?
 
 ## Downloading BetterPushback
 
-You can get the last binary release from here:
-
-https://forums.x-plane.org/files/file/90556-better-pushback-for-x-plane-1112
-
-Some Beta / Pre-Releases can be found here:
-
-https://github.com/olivierbutler/BetterPusbackMod/releases
-
-(Please be aware that pre-releases maybe still has some issues inside and maybe is not final tested.)
-
+_Coming Soon_
 
 ## Building BetterPushback
 
