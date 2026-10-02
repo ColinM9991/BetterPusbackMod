@@ -17,32 +17,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(bp)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_C_STANDARD 11)
-
-option(BP_ENABLE_LEGACY_MAGIC_SQUARES
-        "Enable the original BetterPushback operational button windows" OFF)
-if(BP_ENABLE_LEGACY_MAGIC_SQUARES)
-    add_compile_definitions(BP_ENABLE_LEGACY_MAGIC_SQUARES=1)
-else()
-    add_compile_definitions(BP_ENABLE_LEGACY_MAGIC_SQUARES=0)
-endif()
-
-option(BP_EMULATE_MAC_UI_SCALE
-        "Use the macOS Ground Operations scale on a development build" OFF)
-if(BP_EMULATE_MAC_UI_SCALE)
-    add_compile_definitions(BP_EMULATE_MAC_UI_SCALE=1)
-else()
-    add_compile_definitions(BP_EMULATE_MAC_UI_SCALE=0)
-endif()
-
-option(BP_ENABLE_RUNTIME_TELEMETRY
-        "Record per-pushback diagnostic CSV files at runtime" OFF)
-if(BP_ENABLE_RUNTIME_TELEMETRY)
-    add_compile_definitions(BP_ENABLE_RUNTIME_TELEMETRY=1)
-else()
-    add_compile_definitions(BP_ENABLE_RUNTIME_TELEMETRY=0)
-endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 17)
 
 if (NOT DEFINED COPYRIGHT_YEAR)
     string(TIMESTAMP COPYRIGHT_YEAR "%Y")
