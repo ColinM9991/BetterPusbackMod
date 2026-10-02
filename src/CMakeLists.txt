@@ -86,8 +86,57 @@ file(GLOB OPENSSL_PREFIX "${LIBACFUTILS}/ssl/openssl-${PLAT_LONG}")
 file(GLOB ICONV_PREFIX "${LIBACFUTILS}/libiconv/libiconv-${PLAT_LONG}")
 file(GLOB CURL_PREFIX "${LIBACFUTILS}/curl/libcurl-${PLAT_LONG}")
 
-file(GLOB SRC *.cpp *.c  "imgui/*.cpp" "imgui/misc/cpp/*.cpp"  "imgui/misc/freetype/*.cpp"   "ImgWindow/*.cpp")
-file(GLOB HDR "*.h" "imgui/*.h" "imgui/misc/cpp/*.h" "imgui/misc/freetype/*.h"  "ImgWindow/*.h"  "font/*.h")
+set(SRC
+        acf_outline.c
+        bp.c
+        bp_cam.c
+        cab_view.c
+        cfg.cpp
+        driving.c
+        ff_a320_intf.c
+        msg.c
+        text_rendering.c
+        tug.c
+        wed2route.c
+        xplane.c
+        imgui/imgui.cpp
+        imgui/imgui_demo.cpp
+        imgui/imgui_draw.cpp
+        imgui/imgui_tables.cpp
+        imgui/imgui_widgets.cpp
+        imgui/misc/cpp/imgui_stdlib.cpp
+        imgui/misc/freetype/imgui_freetype.cpp
+        ImgWindow/ImgFontAtlas.cpp
+        ImgWindow/ImgWindow.cpp
+        ImgWindow/xp_img_window.cpp)
+set(HDR
+        acf_outline.h
+        bp.h
+        bp_cam.h
+        cab_view.h
+        cfg.h
+        driving.h
+        ff_a320_intf.h
+        msg.h
+        text_rendering.h
+        tug.h
+        utilities.h
+        wed2route.h
+        xplane.h
+        font/IconsFontAwesome5.h
+        font/LICENSE_iconsFontAwesome5.h
+        imgui/imconfig.h
+        imgui/imgui.h
+        imgui/imgui_internal.h
+        imgui/imstb_rectpack.h
+        imgui/imstb_textedit.h
+        imgui/imstb_truetype.h
+        imgui/misc/cpp/imgui_stdlib.h
+        imgui/misc/freetype/imgui_freetype.h
+        ImgWindow/ImgFontAtlas.h
+        ImgWindow/ImgWindow.h
+        ImgWindow/SystemGL.h
+        ImgWindow/xp_img_window.h)
 
 set(ALL_SRC ${SRC} ${HDR})
 list(SORT ALL_SRC)
