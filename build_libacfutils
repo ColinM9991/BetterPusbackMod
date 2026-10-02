@@ -9,8 +9,8 @@ if [[ "$(uname)" != "Linux" ]]; then
 	exit 1
 fi
 
-export CFLAGS='\ -std=gnu17'
-export CXXFLAGS='\ -std=gnu++17'
+export CFLAGS='-std=gnu17'
+export CXXFLAGS='-std=gnu++17'
 export CPPFLAGS='-std=gnu17'
 export PKG_CONFIG_SYSROOT_DIR=/
 export CMAKE_TOOLCHAIN_FILE="$TOPDIR/cmake/libacfutils-host.cmake"
