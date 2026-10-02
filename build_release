@@ -92,17 +92,18 @@ function install_icon_files() {
 		'move_view.png'
 		'rotate_seg.png'
 		'disconnect.png'
-		'reconnect.png',
-		'planner.png',
-		'push-back.png',
-		'conn_first_mb.png',
-		'status.png'
+		'reconnect.png'
 	)
 	for DIR in data/icons/[a-z][a-z]; do
 		for FILE in ${FILES[@]}; do
 			install_xtra_file "$DIR/$FILE" ""
 		done
 	done
+
+	install_xtra_file "data/icons/en/planner.png" ""
+	install_xtra_file "data/icons/en/push-back.png" ""
+	install_xtra_file "data/icons/en/conn_first_mb.png" ""
+	install_xtra_file "data/icons/en/status.png" ""
 }
 
 function install_tug_files() {
@@ -178,24 +179,29 @@ else
 	    1 ))
 fi
 
+function cmake_build() {
+	BUILD_DIR="$1"
+	shift
+	rm -rf "$BUILD_DIR"
+	cmake -S src -B "$BUILD_DIR" $CMAKE_OPTS_COMMON "$@"
+	cmake --build "$BUILD_DIR" -j ${NCPUS}
+}
+
 case `uname` in
 Linux)
-	( cd src && rm -f CMakeCache.txt && \
-	    cmake $CMAKE_OPTS_COMMON -DCMAKE_TOOLCHAIN_FILE=XCompile.cmake \
-	    -DHOST=x86_64-w64-mingw32 . && make clean && make -j${NCPUS} &&
-	    rm -f libBetterPushback.xpl.dll.a )
-	( cd src && rm -f CMakeCache.txt && cmake $CMAKE_OPTS_COMMON . \
-	    && make clean && make -j${NCPUS} )
-	strip {win_x64,lin_x64}/BetterPushback.xpl
-	cp -r {win_x64,lin_x64} BetterPushback
+	cmake_build build/win64 \
+	    -DCMAKE_TOOLCHAIN_FILE="$PWD/src/XCompile.cmake" \
+	    -DHOST=x86_64-w64-mingw32
+	cmake_build build/lin64
+	strip dist/{win_x64,lin_x64}/BetterPushback.xpl
+	cp -r dist/{win_x64,lin_x64} BetterPushback
 	;;
 Darwin)
-	( cd src && rm -f CMakeCache.txt && cmake $CMAKE_OPTS_COMMON . \
-	    && make clean && make -j${NCPUS} )
+	cmake_build build/mac64
 	if [ -n "$notarize" ]; then
 		make -f notarize/notarize.make notarize
 	fi
-	cp -r mac_x64 BetterPushback
+	cp -r dist/mac_x64 BetterPushback
 	;;
 *)
 	echo "Unsupported platform" >&2

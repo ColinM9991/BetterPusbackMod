@@ -75,28 +75,29 @@ installs the equivalent packages via `apt`.
 
 ### Building libacfutils
 
-libacfutils must be built before BetterPushback. First build its bundled
-third-party dependencies:
+libacfutils must be built before BetterPushback. On Linux, run:
 
 ```
-$ cd src/libacfutils
-$ CFLAGS='\ -std=gnu17' CXXFLAGS='\ -std=gnu++17' ./build_deps
+$ ./build_libacfutils
 ```
 
->Note: the `CFLAGS`/`CXXFLAGS` override is required with recent compilers
->because some of the older bundled dependencies, such as cairo, do not
->compile under the newer default language standard. The leading `\ ` is intentional: `build_dep.common` passes the
->flags through `eval`, so the space must be escaped.
+This builds libacfutils' bundled third-party dependencies and then the
+libacfutils static library, producing `src/libacfutils/qmake/lin64/libacfutils.a`
+and `src/libacfutils/qmake/win64/libacfutils.a`, which `src/CMakeLists.txt`
+links against. The libacfutils submodule must never be modified, so the
+script works around problems with newer host toolchains from the outside:
 
-Then build the libacfutils static library for Linux and Windows:
+- `-std=gnu17` / `-std=gnu++17` via `CFLAGS`, `CXXFLAGS` and `CPPFLAGS`, since
+  some older bundled dependencies (such as cairo) don't compile under the C23
+  default of recent compilers.
+- `PKG_CONFIG_SYSROOT_DIR=/`, since Fedora's `x86_64-w64-mingw32-pkg-config`
+  prepends the MinGW sysroot to every path, breaking the Windows dependencies.
+- `cmake/libacfutils-host.cmake` (via `CMAKE_TOOLCHAIN_FILE`), which makes CMake
+  install the native dependencies into `lib` rather than `lib64`, where
+  libacfutils looks for them.
+- `build-win-lin -E`, which builds libacfutils without `-Werror`.
 
-```
-$ cd qmake
-$ ./build-win-lin
-```
-
-This produces `qmake/lin64/libacfutils.a` and `qmake/win64/libacfutils.a`,
-which `src/CMakeLists.txt` links against. On macOS use `./build-mac` instead.
+On macOS, run `./build_deps` and then `qmake/build-mac` in `src/libacfutils`.
 
 ### Building the Plugin
 
@@ -119,7 +120,7 @@ To add a voice set, see `data/msgs/README.txt` for the information.
 
 ### CREDIT
 
-Original version by skiselkov: https://github.com/skiselkov/BetterPushbackC
+Original version by skiselkov: https://github.com/skiselkov/BetterPushbackC  
 Forked version by obutler: https://github.com/olivierbutler/BetterPusbackMod
 
 ### DISCLAIMER

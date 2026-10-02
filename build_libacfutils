@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -e
+
+TOPDIR="$(cd "$(dirname "$0")" && pwd)"
+
+if [[ "$(uname)" != "Linux" ]]; then
+	echo "This script only supports Linux hosts" >&2
+	exit 1
+fi
+
+export CFLAGS='\ -std=gnu17'
+export CXXFLAGS='\ -std=gnu++17'
+export CPPFLAGS='-std=gnu17'
+export PKG_CONFIG_SYSROOT_DIR=/
+export CMAKE_TOOLCHAIN_FILE="$TOPDIR/cmake/libacfutils-host.cmake"
+
+cd "$TOPDIR/src/libacfutils"
+./build_deps
+unset CFLAGS CXXFLAGS CPPFLAGS CMAKE_TOOLCHAIN_FILE
+
+cd qmake
+./build-win-lin -E
+
+for LIB in lin64/libacfutils.a win64/libacfutils.a; do
+	if ! [ -f "$LIB" ]; then
+		echo "libacfutils build failed: $LIB was not produced" >&2
+		exit 1
+	fi
+done
