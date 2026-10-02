@@ -1,0 +1,123 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-windows
+            os: ubuntu-24.04
+          - name: mac
+            os: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install Linux packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          src/libacfutils/install-ubuntu-packages -y
+
+      - name: Install macOS packages
+        if: runner.os == 'macOS'
+        run: |
+          brew install qt@5 gnu-sed pkg-config automake autoconf libtool
+          echo "$(brew --prefix qt@5)/bin" >> "$GITHUB_PATH"
+          echo "CMAKE_OSX_ARCHITECTURES=x86_64;arm64" >> "$GITHUB_ENV"
+
+      - name: Compute libacfutils cache key
+        id: acfutils-key
+        shell: bash
+        run: |
+          echo "rev=$(git rev-parse HEAD:src/libacfutils)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache libacfutils
+        id: acfutils-cache
+        uses: actions/cache@v6
+        with:
+          path: src/libacfutils
+          key: libacfutils-${{ runner.os }}-${{ steps.acfutils-key.outputs.rev }}-${{ hashFiles('build_libacfutils', 'cmake/libacfutils-host.cmake') }}
+
+      - name: Build libacfutils (Linux & Windows)
+        if: runner.os == 'Linux' && steps.acfutils-cache.outputs.cache-hit != 'true'
+        run: ./build_libacfutils
+
+      - name: Build libacfutils (macOS)
+        if: runner.os == 'macOS' && steps.acfutils-cache.outputs.cache-hit != 'true'
+        working-directory: src/libacfutils
+        run: |
+          ./build_deps
+          cd qmake
+          ./build-mac
+          if ! [ -f mac64/libacfutils.a ]; then
+            echo "libacfutils build failed: mac64/libacfutils.a was not produced" >&2
+            exit 1
+          fi
+
+      - name: Build plugin
+        run: ./build_release
+
+      - name: Upload XPLs
+        uses: actions/upload-artifact@v7
+        with:
+          name: xpl-${{ matrix.name }}
+          path: dist
+          if-no-files-found: error
+
+      - name: Upload plugin data
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-data
+          path: |
+            BetterPushback
+            !BetterPushback/*_x64/**
+          if-no-files-found: error
+
+  package:
+    name: Package
+    needs: build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download plugin data
+        uses: actions/download-artifact@v8
+        with:
+          name: plugin-data
+          path: BetterPushback
+
+      - name: Download XPLs
+        uses: actions/download-artifact@v8
+        with:
+          pattern: xpl-*
+          path: BetterPushback
+          merge-multiple: true
+
+      - name: Verify XPLs
+        run: |
+          for PLAT in win_x64 lin_x64 mac_x64; do
+            if ! [ -f "BetterPushback/$PLAT/BetterPushback.xpl" ]; then
+              echo "Missing $PLAT/BetterPushback.xpl" >&2
+              exit 1
+            fi
+          done
+
+      - name: Upload plugin
+        uses: actions/upload-artifact@v7
+        with:
+          name: BetterPushback
+          path: BetterPushback
+          if-no-files-found: error
