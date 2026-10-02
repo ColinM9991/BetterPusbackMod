@@ -39,8 +39,7 @@
 #include "xp_img_window.h"
 
 #define GITURL                                                                 \
-  "https://api.github.com/repos/olivierbutler/BetterPusbackMod/releases/"      \
-  "latest"
+  "https://api.github.com/repos/ColinM9991/BetterPushback/releases/latest"
 
 #define DL_TIMEOUT 5L /* seconds */
 #define MAX_VERSION_BF_SIZE 32000
@@ -68,7 +67,7 @@ bool_t setup_view_callback_is_alive = B_FALSE;
 
 #define COPYRIGHT1                                                             \
   "BetterPushback " BP_PLUGIN_VERSION                                          \
-  "       © 2017-" COPYRIGHT_YEAR " S.Kiselkov, Robwell, O.Butler. All rights reserved."
+  "       © 2017-" COPYRIGHT_YEAR " S.Kiselkov, Robwell, O.Butler, ColinM. All rights reserved."
 #define COPYRIGHT2                                                             \
   "BetterPushback is open-source software. See COPYING for more information."
 

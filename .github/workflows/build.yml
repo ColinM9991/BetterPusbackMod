@@ -121,3 +121,31 @@ jobs:
           name: BetterPushback
           path: BetterPushback
           if-no-files-found: error
+
+  release:
+    name: Release
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download plugin
+        uses: actions/download-artifact@v8
+        with:
+          name: BetterPushback
+          path: BetterPushback
+
+      - name: Create zip
+        run: zip -r "BetterPushback-${GITHUB_REF_NAME}.zip" BetterPushback
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "BetterPushback-${GITHUB_REF_NAME}.zip" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag
