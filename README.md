@@ -32,35 +32,84 @@ _Coming Soon_
 
 ## Building BetterPushback
 
-To build BetterPushback, check to see you have the pre-requisites installed. The
-Linux and Windows versions are built in one step on an Ubuntu 16.04 (or
-compatible) machine and the Mac version is obviously built on macOS (10.9
-or later).
+The Linux and Windows versions are built in one step on a Linux machine
+(Windows is cross-compiled with MinGW-w64). The Mac version must be built on
+macOS (10.9 or later).
 
->Note: __on macOS only__ , by using the option ```-f```, the script will build also the linux and windows versions. see ```README-docker.md```.  
+BetterPushback depends on [libacfutils](https://codeberg.org/skiselkov/libacfutils),
+which is included as a git submodule in `src/libacfutils`. Clone with
+submodules, or initialize them after cloning:
 
-For the Linux and Mac build pre-requisites, see ```build_xpl.sh```
+```
+$ git submodule update --init --recursive
+```
+
+### Linux / Windows Pre-requisites
+
+The following packages are required to build libacfutils' bundled dependencies
+(cairo, freetype, openal-soft, OpenSSL, curl, etc.), libacfutils itself (via
+`qmake`) and BetterPushback (via `cmake`).
+
+**Fedora:**
+
+```
+$ sudo dnf install gcc gcc-c++ make cmake git pkgconf-pkg-config \
+    autoconf automake libtool patch tar bzip2 xz unzip \
+    perl perl-core python3 \
+    qt5-qtbase-devel \
+    libstdc++-static glibc-static \
+    mesa-libGL-devel mesa-libGLU-devel libX11-devel libXcursor-devel \
+    alsa-lib-devel pulseaudio-libs-devel \
+    mingw64-gcc mingw64-gcc-c++
+```
+
+Fedora installs qmake as `qmake-qt5`, but the libacfutils build scripts call
+`qmake`, so add a symlink:
+
+```
+$ sudo ln -s "$(command -v qmake-qt5)" /usr/local/bin/qmake
+```
+
+**Ubuntu / Debian:** run `src/libacfutils/install-ubuntu-packages`, which
+installs the equivalent packages via `apt`.
+
+### Building libacfutils
+
+libacfutils must be built before BetterPushback. First build its bundled
+third-party dependencies:
+
+```
+$ cd src/libacfutils
+$ CFLAGS='\ -std=gnu17' CXXFLAGS='\ -std=gnu++17' ./build_deps
+```
+
+>Note: the `CFLAGS`/`CXXFLAGS` override is required with recent compilers
+>because some of the older bundled dependencies, such as cairo, do not
+>compile under the newer default language standard. The leading `\ ` is intentional: `build_dep.common` passes the
+>flags through `eval`, so the space must be escaped.
+
+Then build the libacfutils static library for Linux and Windows:
+
+```
+$ cd qmake
+$ ./build-win-lin
+```
+
+This produces `qmake/lin64/libacfutils.a` and `qmake/win64/libacfutils.a`,
+which `src/CMakeLists.txt` links against. On macOS use `./build-mac` instead.
+
+### Building the Plugin
 
 The global build script is located here and is called '```build_release```'.
-Once you have the pre-requisite build packages installed, simply run:
+Once libacfutils is built, simply run:
 ***
 ```
-$ ./build_release [-f]
+$ ./build_release
 ```
-This builds the dependencies and then proceeds to build BetterPushback for the appropriate target platforms. Please note that this builds a
+This builds BetterPushback for the appropriate target platforms (Linux and
+Windows on a Linux host, macOS on a Mac host). Please note that this builds a
 stand-alone version of the plugin that is to be installed into the global
 Resources/plugins directory in X-Plane.
-***
-```
-$ ./build_xpl_sh [-f] 
-```
-This build only the .xpl file. (option described above can be used)
-***
-```
-$ ./install_xplane.sh
-```
-Copy the .xpl files to the x-plane and change the quarantine attribute of the ```mac.xpl``` file.  
-In the script, just set ```XPLANE_PLUGIN_DIR``` accordingly. 
 ***
 
 For details on how to add tug liveries, see
@@ -68,21 +117,10 @@ For details on how to add tug liveries, see
 
 To add a voice set, see `data/msgs/README.txt` for the information.
 
-### libacfutils Library Required
-
-I removed from the project. It need to by downloaded separatly. To make sure you have a matched version, take the fork in my repository.
-To connect with the library setup the Library in the "CMakeLists.txt" File in the "src" directory.
-
-file(GLOB LIBACFUTILS "../../../libs/libacfutils")
-
-As I found out in the last view days the relation to this library are very hard and many issues come from here ... it is not possible to splitup the library.
-
-The library can be found here:
-https://github.com/olivierbutler/libacfutils
-
 ### CREDIT
 
 Original version by skiselkov: https://github.com/skiselkov/BetterPushbackC
+Forked version by obutler: https://github.com/olivierbutler/BetterPusbackMod
 
 ### DISCLAIMER
 

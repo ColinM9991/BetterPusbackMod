@@ -15,20 +15,6 @@
 
 # Copyright 2022 Saso Kiselkov. All rights reserved.
 
-# Some Cleanup's
-
-# Delivery File Name
-version=$(git describe --abbrev=0 --tags)
-version="${version//v/}"
-version="${version//V/}"
-
-ZIP_DELIVERY_FILE="BetterPushback_V${version}.zip"
-
-rm -rf BetterPushback_*.zip
-rm -rf mac_x64
-rm -rf win_x64
-rm -rf lin_x64
-
 CMAKE_OPTS_COMMON="-DCMAKE_BUILD_TYPE=Release"
 
 DIST_FILES=(
@@ -38,7 +24,7 @@ DIST_FILES=(
     'data/msgs/README.txt'			''
     'data/msgs/cc_aliases.cfg'			''
     'objects/tugs/LIVERIES_HOWTO.txt'		''
-	'objects/tugs/readme.txt'		''
+	  'objects/tugs/readme.txt'		''
     'objects/night_lamp.obj'			''
 )
 
@@ -106,17 +92,17 @@ function install_icon_files() {
 		'move_view.png'
 		'rotate_seg.png'
 		'disconnect.png'
-		'reconnect.png'
+		'reconnect.png',
+		'planner.png',
+		'push-back.png',
+		'conn_first_mb.png',
+		'status.png'
 	)
 	for DIR in data/icons/[a-z][a-z]; do
 		for FILE in ${FILES[@]}; do
 			install_xtra_file "$DIR/$FILE" ""
 		done
 	done
-	install_xtra_file "data/icons/en/planner.png" ""
-	install_xtra_file "data/icons/en/push-back.png" ""
-	install_xtra_file "data/icons/en/conn_first_mb.png" ""
-	install_xtra_file "data/icons/en/status.png" ""
 }
 
 function install_tug_files() {
@@ -129,7 +115,6 @@ function install_tug_files() {
 }
 
 function install_po_files() {
-	xgettext --keyword=_ --language=C  -j -i -o data/po/strings.pot src/*.c
 	FILES=( $( find data/po -iname '*.po' ) )
 	for FILE in ${FILES[@]}; do
 		install_xtra_file "$FILE" ""
@@ -150,14 +135,73 @@ function install_override_files() {
 	done
 }
 
+while getopts "nh" o; do
+	case "${o}" in
+	n)
+		if [[ $(uname) != "Darwin" ]]; then
+			echo "Codesigning and notarization can only be done" \
+			    "on macOS" >&2
+			exit 1
+		fi
+		notarize=1
+		;;
+	h)
+		cat << EOF
+Usage: $0 [-nh]
+    -n : (macOS-only) Codesign & notarize the resulting XPL after build
+         Note: requires that you create a file named user.make in the
+         notarize directory with DEVELOPER_USERNAME and DEVELOPER_PASSWORD
+         set. See notarize/notarize.make for more information.
+    -h : show this help screen and exit.
+EOF
+		exit
+		;;
+	*)
+		echo "Unknown option $o. Try $0 -h for help." >&2
+		exit 1
+		;;
+	esac
+done
 
 rm -rf BetterPushback
 mkdir -p BetterPushback
 
 set -e
 
-set -- -f
-source ./build_xpl.sh 
+# We'll try to build on N+1 CPUs we have available. The extra +1 is to allow
+# for one make instance to be blocking on disk.
+HOST_OS="$(uname)"
+if [[ "$HOST_OS" = "Darwin" ]]; then
+	NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
+else
+	NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo  | wc -l) + \
+	    1 ))
+fi
+
+case `uname` in
+Linux)
+	( cd src && rm -f CMakeCache.txt && \
+	    cmake $CMAKE_OPTS_COMMON -DCMAKE_TOOLCHAIN_FILE=XCompile.cmake \
+	    -DHOST=x86_64-w64-mingw32 . && make clean && make -j${NCPUS} &&
+	    rm -f libBetterPushback.xpl.dll.a )
+	( cd src && rm -f CMakeCache.txt && cmake $CMAKE_OPTS_COMMON . \
+	    && make clean && make -j${NCPUS} )
+	strip {win_x64,lin_x64}/BetterPushback.xpl
+	cp -r {win_x64,lin_x64} BetterPushback
+	;;
+Darwin)
+	( cd src && rm -f CMakeCache.txt && cmake $CMAKE_OPTS_COMMON . \
+	    && make clean && make -j${NCPUS} )
+	if [ -n "$notarize" ]; then
+		make -f notarize/notarize.make notarize
+	fi
+	cp -r mac_x64 BetterPushback
+	;;
+*)
+	echo "Unsupported platform" >&2
+	exit 1
+	;;
+esac
 
 install_xtra_files
 install_po_files
