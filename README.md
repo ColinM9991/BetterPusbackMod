@@ -28,7 +28,7 @@ Any changes that cannot be explained in the authors own words (I.E; an explanati
 
 ## Downloading BetterPushback
 
-_Coming Soon_
+Download the [latest release](https://github.com/ColinM9991/BetterPushback/releases/latest) and install it in your X-Plane installation directory undder `Resources/plugins`
 
 ## Building BetterPushback
 
