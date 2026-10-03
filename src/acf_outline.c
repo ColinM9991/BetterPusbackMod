@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 
 #include <acfutils/assert.h>
@@ -97,7 +98,7 @@ part_outline_read(const acf_file_t *acf, const char *part_name, vect2_t *pts,
         pts[s] = p;
     }
     return (B_TRUE);
-    errout:
+errout:
     return (B_FALSE);
 }
 
@@ -147,7 +148,7 @@ wing_seg_outline_read(const acf_file_t *acf, int wing_nbr, vect2_t pts[4],
     }
 
     return (B_TRUE);
-    errout:
+errout:
     return (B_FALSE);
 }
 
@@ -225,7 +226,7 @@ count_wings(const acf_file_t *acf, int *wing_nbrs, int n_wing_nbrs) {
         prev_x_arm = x_arm;
 
         continue;
-        errout:
+    errout:
         for (int i = n + 1; i < n_wing_nbrs; i++)
             wing_nbrs[i - 1] = wing_nbrs[i];
         n--;
@@ -339,12 +340,141 @@ acf_outline_read(const char *filename) {
 
     return (outline);
 
-    errout:
+errout:
     if (outline != NULL)
         acf_outline_free(outline);
     if (acf != NULL)
         acf_file_free(acf);
     return (NULL);
+}
+
+static bool_t
+name_equal_nocase(const char *a, const char *b) {
+    for (; *a != '\0' && *b != '\0'; a++, b++) {
+        if (tolower((unsigned char) *a) != tolower((unsigned char) *b))
+            return (B_FALSE);
+    }
+    return (*a == *b);
+}
+
+/*
+ * Checks whether a "[name name ...]" section header lists `acf_filename'.
+ */
+static bool_t
+section_matches(char *header, const char *acf_filename) {
+    char *end = strchr(header, ']');
+
+    if (end == NULL)
+        return (B_FALSE);
+    *end = '\0';
+    for (char *name = strtok(header + 1, " \t"); name != NULL;
+         name = strtok(NULL, " \t")) {
+        if (name_equal_nocase(name, acf_filename))
+            return (B_TRUE);
+    }
+    return (B_FALSE);
+}
+
+/*
+ * Reads a pre-computed outline for `acf_filename' from the outline override
+ * data file (see objects/override/acf_outlines.txt for the format). Returns
+ * NULL if the data file doesn't exist, has no section for this aircraft, or
+ * the section is incomplete.
+ */
+acf_outline_t *
+acf_outline_read_override(const char *datafile, const char *acf_filename) {
+    FILE *fp;
+    char line[256];
+    bool_t in_section = B_FALSE, found = B_FALSE;
+    bool_t have_semispan = B_FALSE, have_length = B_FALSE, have_wingtip = B_FALSE;
+    size_t cap_pts = 0;
+    acf_outline_t *outline;
+
+    ASSERT(datafile != NULL);
+    ASSERT(acf_filename != NULL);
+
+    fp = fopen(datafile, "rb");
+    if (fp == NULL)
+        return (NULL);
+
+    outline = safe_calloc(1, sizeof(*outline));
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        char *p = line;
+        double x, y;
+
+        size_t len;
+
+        while (isspace((unsigned char) *p))
+            p++;
+        len = strlen(p);
+        while (len > 0 && isspace((unsigned char) p[len - 1]))
+            p[--len] = '\0';
+        if (*p == '\0' || *p == '#')
+            continue;
+
+        if (*p == '[') {
+            if (in_section)
+                break; /* end of our section */
+            in_section = section_matches(p, acf_filename);
+            found = found || in_section;
+            continue;
+        }
+        if (!in_section)
+            continue;
+
+        if (sscanf(p, "semispan %lf", &x) == 1) {
+            outline->semispan = x;
+            have_semispan = B_TRUE;
+        } else if (sscanf(p, "length %lf", &x) == 1) {
+            outline->length = x;
+            have_length = B_TRUE;
+        } else if (sscanf(p, "wingtip %lf %lf", &x, &y) == 2) {
+            outline->wingtip = VECT2(x, y);
+            have_wingtip = B_TRUE;
+        } else if (strncmp(p, "pt ", 3) == 0) {
+            vect2_t pt;
+
+            if (sscanf(p, "pt %lf %lf", &x, &y) == 2) {
+                pt = VECT2(x, y);
+            } else if (strncmp(p, "pt null", 7) == 0) {
+                pt = NULL_VECT2;
+            } else {
+                logMsg(BP_ERROR_LOG "%s: malformed outline point for %s: %s",
+                       datafile, acf_filename, p);
+                goto errout;
+            }
+            if (outline->num_pts == cap_pts) {
+                cap_pts = (cap_pts == 0 ? 32 : cap_pts * 2);
+                outline->pts = safe_realloc(outline->pts,
+                                            cap_pts * sizeof(*outline->pts));
+            }
+            outline->pts[outline->num_pts++] = pt;
+        } else {
+            logMsg(BP_ERROR_LOG "%s: unknown outline entry for %s: %s",
+                   datafile, acf_filename, p);
+            goto errout;
+        }
+    }
+    fclose(fp);
+    fp = NULL;
+
+    if (!found)
+        goto errout;
+    if (!have_semispan || !have_length || !have_wingtip ||
+        outline->num_pts == 0) {
+        logMsg(BP_ERROR_LOG "%s: incomplete outline for %s", datafile,
+               acf_filename);
+        goto errout;
+    }
+
+    return outline;
+
+errout:
+    if (fp != NULL)
+        fclose(fp);
+    acf_outline_free(outline);
+    return NULL;
 }
 
 void

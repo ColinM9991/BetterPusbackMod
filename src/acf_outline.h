@@ -35,6 +35,9 @@ typedef struct {
 
 acf_outline_t *acf_outline_read(const char *filename);
 
+acf_outline_t *acf_outline_read_override(const char *datafile,
+                                         const char *acf_filename);
+
 void acf_outline_free(acf_outline_t *outline);
 
 #ifdef    __cplusplus

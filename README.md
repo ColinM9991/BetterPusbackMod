@@ -118,6 +118,9 @@ For details on how to add tug liveries, see
 
 To add a voice set, see `data/msgs/README.txt` for the information.
 
+To add or fix an aircraft's outline in the pushback planner, see
+`objects/override/README.md`.
+
 ### CREDIT
 
 Original version by skiselkov: https://github.com/skiselkov/BetterPushbackC  

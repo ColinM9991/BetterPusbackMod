@@ -1475,10 +1475,10 @@ bp_init(void) {
 
     doors_refs_init();
     
-    acf_override_file  = mkpathname(bp_xpdir, bp_plugindir, "objects", "override", my_acf, NULL);
-    if (file_exists(acf_override_file, NULL)) {
-        logMsg(BP_INFO_LOG "acf override file found in %s : using it  ", acf_override_file);
-        bp_ls.outline = acf_outline_read(acf_override_file);
+    acf_override_file  = mkpathname(bp_xpdir, bp_plugindir, "objects", "override", "acf_outlines.txt", NULL);
+    bp_ls.outline = acf_outline_read_override(acf_override_file, my_acf);
+    if (bp_ls.outline != NULL) {
+        logMsg(BP_INFO_LOG "acf outline override for %s found in %s : using it", my_acf, acf_override_file);
     } else {
         bp_ls.outline = acf_outline_read(my_path);
     }

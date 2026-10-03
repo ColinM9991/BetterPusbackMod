@@ -130,10 +130,7 @@ function install_font_files() {
 }
 
 function install_override_files() {
-	FILES=( $( find objects/override -iname '*.acf' ) )
-	for FILE in ${FILES[@]}; do
-		install_xtra_file "$FILE" ""
-	done
+	install_xtra_file "objects/override/acf_outlines.txt" ""
 }
 
 while getopts "nh" o; do

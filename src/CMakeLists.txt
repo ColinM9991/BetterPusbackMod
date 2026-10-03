@@ -307,6 +307,24 @@ target_link_libraries(bp
         ${LZMA_LIBRARY}
         ${EXTRA_PLATFORM_LIBS})
 
+# CLI tool for generating objects/override/acf_outlines.txt sections
+if (UNIX AND NOT APPLE)
+    add_executable(acf_outline_dump EXCLUDE_FROM_ALL
+            ../tools/acf_outline_dump.c
+            acf_outline.c)
+    target_include_directories(acf_outline_dump PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}"
+            $<TARGET_PROPERTY:bp,INCLUDE_DIRECTORIES>)
+
+    target_compile_definitions(acf_outline_dump PRIVATE _LACF_WITHOUT_XPLM)
+    target_link_libraries(acf_outline_dump
+            ${LIBACFUTILS_LIBRARY}
+            ${ZLIB_LIBRARY}
+            pthread)
+    set_target_properties(acf_outline_dump PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+            "${CMAKE_SOURCE_DIR}/../dist/tools")
+endif ()
+
 set_target_properties(bp PROPERTIES PREFIX "")
 set_target_properties(bp PROPERTIES SUFFIX "")
 
