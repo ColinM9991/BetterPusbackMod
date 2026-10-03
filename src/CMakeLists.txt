@@ -187,12 +187,34 @@ link_libraries(m)
 file(GLOB LIBACFUTILS_LIBRARY
         "${LIBACFUTILS}/qmake/${PLAT_SHORT}/libacfutils.a")
 file(GLOB LIBPNG_LIBRARY "${LIBPNG_PREFIX}/lib/libpng16.a")
-file(GLOB ZLIB_LIBRARY "${LIBACFUTILS}/zlib/zlib-${PLAT_LONG}/lib/libz.a")
+# Some libacfutils dependencies only leave their archive in the build tree
+# (e.g. .libs/) rather than the install prefix, so take the first that exists.
+function(find_dep_archive VAR)
+    foreach (candidate ${ARGN})
+        if (EXISTS "${candidate}")
+            set(${VAR} "${candidate}" PARENT_SCOPE)
+            return()
+        endif ()
+    endforeach ()
+    set(${VAR} "" PARENT_SCOPE)
+endfunction()
+
+find_dep_archive(ZLIB_LIBRARY
+        "${LIBACFUTILS}/zlib/zlib-${PLAT_LONG}/lib/libz.a"
+        "${LIBACFUTILS}/zlib/zlib-${PLAT_LONG}/libz.a")
 file(GLOB PCRE2_LIBRARY "${PCRE2_PREFIX}/lib/libpcre2-8.a")
-file(GLOB OPUSFILE_LIBRARY "${OPUSFILE_PREFIX}/lib/libopusfile.a")
-file(GLOB OPUS_LIBRARY "${LIBACFUTILS}/opus/opus-${PLAT_LONG}/lib/libopus.a")
-file(GLOB OGG_LIBRARY "${LIBOGG_PREFIX}/lib/libogg.a")
-file(GLOB LIBXML2_LIBRARY "${LIBXML_PREFIX}/lib/libxml2.a")
+find_dep_archive(OPUSFILE_LIBRARY
+        "${OPUSFILE_PREFIX}/lib/libopusfile.a"
+        "${OPUSFILE_PREFIX}/.libs/libopusfile.a")
+find_dep_archive(OPUS_LIBRARY
+        "${LIBACFUTILS}/opus/opus-${PLAT_LONG}/lib/libopus.a"
+        "${LIBACFUTILS}/opus/opus-${PLAT_LONG}/.libs/libopus.a")
+find_dep_archive(OGG_LIBRARY
+        "${LIBOGG_PREFIX}/lib/libogg.a"
+        "${LIBACFUTILS}/opus/libogg-${PLAT_LONG}/src/.libs/libogg.a")
+find_dep_archive(LIBXML2_LIBRARY
+        "${LIBXML_PREFIX}/lib/libxml2.a"
+        "${LIBXML_PREFIX}/.libs/libxml2.a")
 if (WIN32)
     file(GLOB OPENAL_LIBRARY "${OPENAL_PREFIX}/lib/libOpenAL32.a")
 else ()
@@ -213,6 +235,16 @@ file(GLOB OPENSSL_LIBRARY "${OPENSSL_PREFIX}/lib/libssl.a")
 file(GLOB CRYPTO_LIBRARY "${OPENSSL_PREFIX}/lib/libcrypto.a")
 file(GLOB ICONV_LIBRARY "${ICONV_PREFIX}/lib/libiconv.a")
 file(GLOB LZMA_LIBRARY "${LIBACFUTILS}/lzma/qmake/${PLAT_LONG}/liblzma.a")
+
+
+foreach(lib LIBACFUTILS_LIBRARY LIBPNG_LIBRARY ZLIB_LIBRARY PCRE2_LIBRARY
+        OPUSFILE_LIBRARY OPUS_LIBRARY OGG_LIBRARY LIBXML2_LIBRARY OPENAL_LIBRARY
+        FREETYPE_LIBRARY CAIRO_LIBRARY PIXMAN_LIBRARY GLEW_LIBRARY CURL_LIBRARY
+        OPENSSL_LIBRARY CRYPTO_LIBRARY ICONV_LIBRARY LZMA_LIBRARY)
+    if(NOT ${lib})
+        message(FATAL_ERROR "${lib} not found. Build libacfutils dependencies first.")
+    endif()
+endforeach()
 
 if (APPLE)
     find_library(XPLM_FRAMEWORK XPLM "${LIBACFUTILS}/SDK/Libraries/Mac")
